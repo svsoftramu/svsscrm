@@ -95,8 +95,8 @@ class PushNotificationService {
   Future<void> _sendTokenToServer(String token) async {
     try {
       if (ApiService.instance.isAuthenticated) {
-        await ApiService.instance.post('device/register', {
-          'fcm_token': token,
+        await ApiService.instance.post('push/register', {
+          'device_token': token,
           'platform': 'android',
         });
       }
