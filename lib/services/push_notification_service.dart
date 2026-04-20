@@ -73,14 +73,15 @@ class PushNotificationService {
       });
     }
 
-    // Get and register FCM token
-    await _registerToken();
+    // Get and register FCM token (will only send if authenticated)
+    await registerToken();
 
     // Listen for token refresh
     _fcm.onTokenRefresh.listen((token) => _sendTokenToServer(token));
   }
 
-  Future<void> _registerToken() async {
+  /// Call this after login to register the device token with the server.
+  Future<void> registerToken() async {
     try {
       final token = await _fcm.getToken();
       if (token != null) {

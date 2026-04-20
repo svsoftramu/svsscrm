@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../services/push_notification_service.dart';
 import '../theme/app_theme.dart';
 import 'home_screen.dart';
 
@@ -52,6 +53,9 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         _emailController.text.trim(),
         _passwordController.text.trim(),
       );
+
+      // Register FCM token now that we're authenticated
+      await PushNotificationService.instance.registerToken();
 
       if (mounted) {
         Navigator.of(context).pushReplacement(
