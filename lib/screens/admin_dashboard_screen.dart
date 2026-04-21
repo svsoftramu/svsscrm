@@ -41,8 +41,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       String endpoint = 'admin/dashboard?period=$_period';
       if (_period == 'custom' && _customRange != null) {
         final fmt = DateFormat('yyyy-MM-dd');
-        endpoint += '&start_date=${fmt.format(_customRange!.start)}'
-            '&end_date=${fmt.format(_customRange!.end)}';
+        endpoint += '&date_from=${fmt.format(_customRange!.start)}'
+            '&date_to=${fmt.format(_customRange!.end)}';
       }
       final response = await ApiService.instance.get(endpoint);
       setState(() {
