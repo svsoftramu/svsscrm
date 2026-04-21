@@ -8,7 +8,6 @@ import 'attendance_screen.dart';
 import 'estimates_screen.dart';
 import 'invoices_screen.dart';
 import 'task_screen.dart';
-import 'search_screen.dart';
 import 'notifications_screen.dart';
 import 'client_visits_screen.dart';
 
@@ -48,7 +47,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final greeting = now.hour < 12 ? 'Good Morning' : now.hour < 17 ? 'Good Afternoon' : 'Good Evening';
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       body: Consumer<CRMProvider>(
         builder: (context, provider, _) {
           return RefreshIndicator(
@@ -296,50 +294,51 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildQuickActions(BuildContext context) {
+    final adaptive = AppColors.adaptive(context);
     final actions = [
       _QuickActionChip(
         icon: Icons.face_rounded,
         label: 'Attendance',
         color: AppColors.success,
-        bgColor: AppColors.cardGreen,
+        bgColor: adaptive.cardGreen,
         onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AttendanceScreen())),
       ),
       _QuickActionChip(
         icon: Icons.add_task_rounded,
         label: 'New Task',
         color: AppColors.primary,
-        bgColor: AppColors.cardBlue,
+        bgColor: adaptive.cardBlue,
         onTap: () { if (_requireCheckedIn(context)) showAddTaskSheet(context); },
       ),
       _QuickActionChip(
         icon: Icons.description_rounded,
         label: 'Estimates',
         color: const Color(0xFF8B5CF6),
-        bgColor: AppColors.cardPurple,
+        bgColor: adaptive.cardPurple,
         onTap: () { if (_requireCheckedIn(context)) Navigator.push(context, MaterialPageRoute(builder: (_) => const EstimatesScreen())); },
       ),
       _QuickActionChip(
         icon: Icons.receipt_long_rounded,
         label: 'Invoices',
         color: const Color(0xFF14B8A6),
-        bgColor: AppColors.cardTeal,
+        bgColor: adaptive.cardTeal,
         onTap: () { if (_requireCheckedIn(context)) Navigator.push(context, MaterialPageRoute(builder: (_) => const InvoicesScreen())); },
       ),
       _QuickActionChip(
         icon: Icons.location_on_rounded,
         label: 'Visits',
         color: const Color(0xFFEF4444),
-        bgColor: AppColors.cardRed,
+        bgColor: adaptive.cardRed,
         onTap: () { if (_requireCheckedIn(context)) Navigator.push(context, MaterialPageRoute(builder: (_) => const ClientVisitsScreen())); },
       ),
     ];
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final itemWidth = (constraints.maxWidth - 30) / 4; // 4 per row, 3 gaps of 10
+        final itemWidth = (constraints.maxWidth - 24) / 3; // 3 per row, 2 gaps of 12
         return Wrap(
-          spacing: 10,
-          runSpacing: 10,
+          spacing: 12,
+          runSpacing: 12,
           children: actions.map((chip) => SizedBox(width: itemWidth, child: chip)).toList(),
         );
       },
@@ -347,6 +346,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildDashboardStats(Map<String, dynamic> data) {
+    final adaptive = AppColors.adaptive(context);
     final statCards = <Widget>[];
     final iconMap = {
       'leads': Icons.person_add_alt_1_rounded, 'customers': Icons.people_rounded,
@@ -371,12 +371,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
       'open_tickets': AppColors.error,
     };
     final bgMap = {
-      'leads': AppColors.cardBlue, 'customers': AppColors.cardGreen,
-      'tasks': AppColors.cardOrange, 'projects': AppColors.cardPurple,
-      'invoices': AppColors.cardTeal, 'tickets': AppColors.cardRed,
-      'total_leads': AppColors.cardBlue, 'total_customers': AppColors.cardGreen,
-      'total_tasks': AppColors.cardOrange, 'total_projects': AppColors.cardPurple,
-      'pending_tasks': AppColors.cardOrange, 'open_tickets': AppColors.cardRed,
+      'leads': adaptive.cardBlue, 'customers': adaptive.cardGreen,
+      'tasks': adaptive.cardOrange, 'projects': adaptive.cardPurple,
+      'invoices': adaptive.cardTeal, 'tickets': adaptive.cardRed,
+      'total_leads': adaptive.cardBlue, 'total_customers': adaptive.cardGreen,
+      'total_tasks': adaptive.cardOrange, 'total_projects': adaptive.cardPurple,
+      'pending_tasks': adaptive.cardOrange, 'open_tickets': adaptive.cardRed,
     };
 
     data.forEach((key, value) {
@@ -386,7 +386,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           value: value.toString(),
           icon: iconMap[key] ?? Icons.analytics_rounded,
           color: colorMap[key] ?? AppColors.primary,
-          bgColor: bgMap[key] ?? AppColors.cardBlue,
+          bgColor: bgMap[key] ?? adaptive.cardBlue,
         ));
       } else if (value is Map) {
         value.forEach((subKey, subValue) {
@@ -396,7 +396,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               value: subValue.toString(),
               icon: iconMap[key] ?? Icons.analytics_rounded,
               color: colorMap[key] ?? AppColors.primary,
-              bgColor: bgMap[key] ?? AppColors.cardBlue,
+              bgColor: bgMap[key] ?? adaptive.cardBlue,
             ));
           }
         });
@@ -417,10 +417,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildErrorCard(String error) {
+    final cardColor = Theme.of(context).cardTheme.color ?? Theme.of(context).colorScheme.surface;
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    final adaptive = AppColors.adaptive(context);
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.error.withValues(alpha: 0.2)),
       ),
@@ -428,7 +432,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         children: [
           Container(
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: AppColors.cardRed, borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(color: adaptive.cardRed, borderRadius: BorderRadius.circular(12)),
             child: const Icon(Icons.cloud_off_rounded, size: 24, color: AppColors.error),
           ),
           const SizedBox(width: 14),
@@ -436,11 +440,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Could not load dashboard', style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                Text('Could not load dashboard', style: TextStyle(fontWeight: FontWeight.w600, color: onSurface)),
                 const SizedBox(height: 2),
                 Text(
                   error.replaceFirst('Exception: ', ''),
-                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  style: TextStyle(fontSize: 12, color: onSurface.withValues(alpha: 0.6)),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -470,10 +474,11 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final onSurface = Theme.of(context).colorScheme.onSurface;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary, letterSpacing: -0.2)),
+        Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: onSurface, letterSpacing: -0.2)),
         if (onSeeAll != null)
           GestureDetector(
             onTap: onSeeAll,
@@ -502,14 +507,21 @@ class _ClockInOutCard extends StatelessWidget {
     final checkOutTime = attendance['check_out']?.toString();
     final hoursWorked = attendance['hours_worked']?.toString() ?? attendance['total_hours']?.toString();
 
+    final cardColor = Theme.of(context).cardTheme.color ?? Theme.of(context).colorScheme.surface;
+    final borderColor = Theme.of(context).dividerColor;
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    final adaptive = AppColors.adaptive(context);
+
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: borderColor),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 2)),
+          if (isLight)
+            BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 2)),
         ],
       ),
       child: Row(
@@ -547,7 +559,7 @@ class _ClockInOutCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
-                    color: isCheckedIn ? AppColors.success : (checkOutTime != null ? AppColors.primary : AppColors.textSecondary),
+                    color: isCheckedIn ? AppColors.success : (checkOutTime != null ? AppColors.primary : onSurface.withValues(alpha: 0.6)),
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -566,7 +578,7 @@ class _ClockInOutCard extends StatelessWidget {
                     ],
                   )
                 else
-                  const Text('Tap to mark your attendance', style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                  Text('Tap to mark your attendance', style: TextStyle(fontSize: 12, color: onSurface.withValues(alpha: 0.4))),
               ],
             ),
           ),
@@ -580,7 +592,7 @@ class _ClockInOutCard extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   decoration: BoxDecoration(
-                    color: isCheckedIn ? AppColors.cardRed : AppColors.cardGreen,
+                    color: isCheckedIn ? adaptive.cardRed : adaptive.cardGreen,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -638,7 +650,7 @@ class _TimeChip extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════
-// QUICK ACTION CHIP (Horizontal scroll)
+// QUICK ACTION CHIP (3-column grid)
 // ═══════════════════════════════════════════════
 
 class _QuickActionChip extends StatelessWidget {
@@ -652,28 +664,32 @@ class _QuickActionChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cardColor = Theme.of(context).cardTheme.color ?? Theme.of(context).colorScheme.surface;
+    final borderColor = Theme.of(context).dividerColor;
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
+          padding: const EdgeInsets.symmetric(vertical: 16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: cardColor,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
+            border: Border.all(color: borderColor),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(12)),
-                child: Icon(icon, color: color, size: 22),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(14)),
+                child: Icon(icon, color: color, size: 32),
               ),
-              const SizedBox(height: 6),
-              Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: AppColors.textSecondary), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
+              const SizedBox(height: 8),
+              Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: onSurface.withValues(alpha: 0.6)), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
             ],
           ),
         ),
@@ -694,6 +710,10 @@ class _TodaysTasks extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final cardColor = Theme.of(context).cardTheme.color ?? Theme.of(context).colorScheme.surface;
+    final borderColor = Theme.of(context).dividerColor;
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    final adaptive = AppColors.adaptive(context);
 
     // Filter tasks that are due today or not completed
     final todayTasks = tasks.where((t) {
@@ -725,24 +745,24 @@ class _TodaysTasks extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: cardColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
+          border: Border.all(color: borderColor),
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: AppColors.cardGreen, borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(color: adaptive.cardGreen, borderRadius: BorderRadius.circular(12)),
               child: const Icon(Icons.task_alt_rounded, color: AppColors.success, size: 22),
             ),
             const SizedBox(width: 14),
-            const Column(
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('No tasks for today', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-                SizedBox(height: 2),
-                Text('You\'re all clear!', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                Text('No tasks for today', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: onSurface)),
+                const SizedBox(height: 2),
+                Text('You\'re all clear!', style: TextStyle(fontSize: 12, color: onSurface.withValues(alpha: 0.6))),
               ],
             ),
           ],
@@ -752,9 +772,9 @@ class _TodaysTasks extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: borderColor),
       ),
       child: Column(
         children: [
@@ -765,18 +785,18 @@ class _TodaysTasks extends StatelessWidget {
               children: [
                 Container(
                   padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(color: AppColors.cardBlue, borderRadius: BorderRadius.circular(10)),
+                  decoration: BoxDecoration(color: adaptive.cardBlue, borderRadius: BorderRadius.circular(10)),
                   child: const Icon(Icons.checklist_rounded, color: AppColors.primary, size: 20),
                 ),
                 const SizedBox(width: 10),
-                Text('${allTodoTasks.length}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                Text('${allTodoTasks.length}', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: onSurface)),
                 const SizedBox(width: 6),
-                const Text('pending', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                Text('pending', style: TextStyle(fontSize: 13, color: onSurface.withValues(alpha: 0.6))),
                 if (overdueTasks.isNotEmpty) ...[
                   const Spacer(),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(color: AppColors.cardRed, borderRadius: BorderRadius.circular(8)),
+                    decoration: BoxDecoration(color: adaptive.cardRed, borderRadius: BorderRadius.circular(8)),
                     child: Text('${overdueTasks.length} overdue', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.error)),
                   ),
                 ],
@@ -794,7 +814,7 @@ class _TodaysTasks extends StatelessWidget {
             final priority = task['priority']?.toString() ?? '';
             final statusId = (task['status'] ?? '0').toString();
 
-            Color priorityColor = AppColors.textMuted;
+            Color priorityColor = onSurface.withValues(alpha: 0.4);
             String priorityLabel = '';
             if (priority == '1' || priority.toLowerCase().contains('high') || priority.toLowerCase().contains('urgent')) {
               priorityColor = AppColors.error;
@@ -834,16 +854,16 @@ class _TodaysTasks extends StatelessWidget {
                           children: [
                             Text(
                               name.toString(),
-                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: onSurface),
                               maxLines: 1, overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 2),
                             Row(
                               children: [
                                 if (isOverdue)
-                                  Text('Overdue · ${_formatDate(due)}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.error))
+                                  Text('Overdue \u00b7 ${_formatDate(due)}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.error))
                                 else
-                                  Text('Due today', style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                                  Text('Due today', style: TextStyle(fontSize: 11, color: onSurface.withValues(alpha: 0.4))),
                                 if (priorityLabel.isNotEmpty) ...[
                                   const SizedBox(width: 8),
                                   Container(
@@ -901,6 +921,11 @@ class _SalesPipelineCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cardColor = Theme.of(context).cardTheme.color ?? Theme.of(context).colorScheme.surface;
+    final borderColor = Theme.of(context).dividerColor;
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    final adaptive = AppColors.adaptive(context);
+
     // Count leads by status
     int newLeads = 0, contacted = 0, qualified = 0, proposal = 0, won = 0, lost = 0;
     for (final lead in leads) {
@@ -927,9 +952,9 @@ class _SalesPipelineCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: borderColor),
       ),
       child: Column(
         children: [
@@ -938,18 +963,18 @@ class _SalesPipelineCard extends StatelessWidget {
             children: [
               Container(
                 padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(color: AppColors.cardBlue, borderRadius: BorderRadius.circular(12)),
+                decoration: BoxDecoration(color: adaptive.cardBlue, borderRadius: BorderRadius.circular(12)),
                 child: const Icon(Icons.trending_up_rounded, color: AppColors.primary, size: 22),
               ),
               const SizedBox(width: 12),
-              Text('$total', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+              Text('$total', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: onSurface)),
               const SizedBox(width: 6),
-              const Text('Total Leads', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+              Text('Total Leads', style: TextStyle(fontSize: 13, color: onSurface.withValues(alpha: 0.6))),
               const Spacer(),
               if (won > 0)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(color: AppColors.cardGreen, borderRadius: BorderRadius.circular(8)),
+                  decoration: BoxDecoration(color: adaptive.cardGreen, borderRadius: BorderRadius.circular(8)),
                   child: Text('$won Won', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.success)),
                 ),
             ],
@@ -1035,6 +1060,11 @@ class _TodaysFollowups extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final cardColor = Theme.of(context).cardTheme.color ?? Theme.of(context).colorScheme.surface;
+    final borderColor = Theme.of(context).dividerColor;
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    final adaptive = AppColors.adaptive(context);
+
     final todayTasks = tasks.where((t) {
       final due = (t['duedate'] ?? t['due_date'] ?? t['startdate'] ?? '').toString();
       return due.startsWith(today);
@@ -1059,24 +1089,24 @@ class _TodaysFollowups extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: cardColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
+          border: Border.all(color: borderColor),
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: AppColors.cardGreen, borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(color: adaptive.cardGreen, borderRadius: BorderRadius.circular(12)),
               child: const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 22),
             ),
             const SizedBox(width: 14),
-            const Column(
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('All caught up!', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-                SizedBox(height: 2),
-                Text('No follow-ups due today', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                Text('All caught up!', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: onSurface)),
+                const SizedBox(height: 2),
+                Text('No follow-ups due today', style: TextStyle(fontSize: 12, color: onSurface.withValues(alpha: 0.6))),
               ],
             ),
           ],
@@ -1086,9 +1116,9 @@ class _TodaysFollowups extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: borderColor),
       ),
       child: Column(
         children: [
@@ -1100,7 +1130,7 @@ class _TodaysFollowups extends StatelessWidget {
             final isOverdue = due.isNotEmpty && !due.startsWith(today);
             final priority = task['priority']?.toString() ?? '';
 
-            Color priorityColor = AppColors.textMuted;
+            Color priorityColor = onSurface.withValues(alpha: 0.4);
             if (priority == '1' || priority.toLowerCase().contains('high') || priority.toLowerCase().contains('urgent')) {
               priorityColor = AppColors.error;
             } else if (priority == '2' || priority.toLowerCase().contains('medium')) {
@@ -1117,7 +1147,7 @@ class _TodaysFollowups extends StatelessWidget {
                         width: 36,
                         height: 36,
                         decoration: BoxDecoration(
-                          color: isOverdue ? AppColors.cardRed : AppColors.cardBlue,
+                          color: isOverdue ? adaptive.cardRed : adaptive.cardBlue,
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Icon(
@@ -1131,17 +1161,17 @@ class _TodaysFollowups extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(name.toString(), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary), maxLines: 1, overflow: TextOverflow.ellipsis),
+                            Text(name.toString(), style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: onSurface), maxLines: 1, overflow: TextOverflow.ellipsis),
                             const SizedBox(height: 2),
                             Row(
                               children: [
                                 if (isOverdue)
                                   const Text('Overdue', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.error))
                                 else
-                                  const Text('Due today', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                                  Text('Due today', style: TextStyle(fontSize: 11, color: onSurface.withValues(alpha: 0.4))),
                                 if (priority.isNotEmpty) ...[
                                   const SizedBox(width: 8),
-                                  Container(width: 4, height: 4, decoration: BoxDecoration(color: AppColors.textMuted, shape: BoxShape.circle)),
+                                  Container(width: 4, height: 4, decoration: BoxDecoration(color: onSurface.withValues(alpha: 0.4), shape: BoxShape.circle)),
                                   const SizedBox(width: 8),
                                   Container(
                                     width: 6, height: 6,
@@ -1187,6 +1217,10 @@ class _RecentActivityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cardColor = Theme.of(context).cardTheme.color ?? Theme.of(context).colorScheme.surface;
+    final borderColor = Theme.of(context).dividerColor;
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+
     // Build activity items from recent leads and tasks
     final activities = <_ActivityItem>[];
 
@@ -1220,21 +1254,21 @@ class _RecentActivityCard extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: cardColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
+          border: Border.all(color: borderColor),
         ),
-        child: const Center(
-          child: Text('No recent activity', style: TextStyle(fontSize: 13, color: AppColors.textMuted)),
+        child: Center(
+          child: Text('No recent activity', style: TextStyle(fontSize: 13, color: onSurface.withValues(alpha: 0.4))),
         ),
       );
     }
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: borderColor),
       ),
       child: Column(
         children: activities.asMap().entries.map((entry) {
@@ -1260,14 +1294,14 @@ class _RecentActivityCard extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(item.title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary), maxLines: 1, overflow: TextOverflow.ellipsis),
+                          Text(item.title, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: onSurface), maxLines: 1, overflow: TextOverflow.ellipsis),
                           const SizedBox(height: 2),
-                          Text(item.subtitle, style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                          Text(item.subtitle, style: TextStyle(fontSize: 11, color: onSurface.withValues(alpha: 0.4))),
                         ],
                       ),
                     ),
                     if (item.time.isNotEmpty)
-                      Text(item.time, style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                      Text(item.time, style: TextStyle(fontSize: 11, color: onSurface.withValues(alpha: 0.4))),
                   ],
                 ),
               ),
@@ -1324,11 +1358,16 @@ class _AnnouncementsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = announcements.take(3).toList();
+    final cardColor = Theme.of(context).cardTheme.color ?? Theme.of(context).colorScheme.surface;
+    final borderColor = Theme.of(context).dividerColor;
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    final adaptive = AppColors.adaptive(context);
+
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: borderColor),
       ),
       child: Column(
         children: items.asMap().entries.map((entry) {
@@ -1345,7 +1384,7 @@ class _AnnouncementsCard extends StatelessWidget {
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: AppColors.cardPurple,
+                        color: adaptive.cardPurple,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(Icons.campaign_rounded, color: Color(0xFF8B5CF6), size: 18),
@@ -1357,7 +1396,7 @@ class _AnnouncementsCard extends StatelessWidget {
                         children: [
                           Text(
                             a['title']?.toString() ?? a['subject']?.toString() ?? 'Announcement',
-                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: onSurface),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -1365,7 +1404,7 @@ class _AnnouncementsCard extends StatelessWidget {
                             const SizedBox(height: 2),
                             Text(
                               (a['message'] ?? a['description'] ?? '').toString(),
-                              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                              style: TextStyle(fontSize: 12, color: onSurface.withValues(alpha: 0.6)),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -1396,6 +1435,11 @@ class _HolidaysCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cardColor = Theme.of(context).cardTheme.color ?? Theme.of(context).colorScheme.surface;
+    final borderColor = Theme.of(context).dividerColor;
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    final adaptive = AppColors.adaptive(context);
+
     // Filter upcoming holidays
     final now = DateTime.now();
     final upcoming = holidays.where((h) {
@@ -1407,19 +1451,19 @@ class _HolidaysCard extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: cardColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
+          border: Border.all(color: borderColor),
         ),
-        child: const Center(child: Text('No upcoming holidays', style: TextStyle(fontSize: 13, color: AppColors.textMuted))),
+        child: Center(child: Text('No upcoming holidays', style: TextStyle(fontSize: 13, color: onSurface.withValues(alpha: 0.4)))),
       );
     }
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: borderColor),
       ),
       child: Column(
         children: upcoming.asMap().entries.map((entry) {
@@ -1440,7 +1484,7 @@ class _HolidaysCard extends StatelessWidget {
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: AppColors.cardOrange,
+                        color: adaptive.cardOrange,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Column(
@@ -1459,10 +1503,10 @@ class _HolidaysCard extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                          Text(name, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: onSurface)),
                           if (dt != null) ...[
                             const SizedBox(height: 2),
-                            Text(DateFormat('EEEE').format(dt), style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                            Text(DateFormat('EEEE').format(dt), style: TextStyle(fontSize: 11, color: onSurface.withValues(alpha: 0.4))),
                           ],
                         ],
                       ),
@@ -1494,11 +1538,15 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cardColor = Theme.of(context).cardTheme.color ?? Theme.of(context).colorScheme.surface;
+    final borderColor = Theme.of(context).dividerColor;
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: borderColor),
       ),
       padding: const EdgeInsets.all(14),
       child: Column(
@@ -1516,7 +1564,7 @@ class _StatCard extends StatelessWidget {
             child: Text(value, style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: color, letterSpacing: -0.5)),
           ),
           const SizedBox(height: 2),
-          Text(title, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
+          Text(title, style: TextStyle(fontSize: 11, color: onSurface.withValues(alpha: 0.6), fontWeight: FontWeight.w500),
               maxLines: 1, overflow: TextOverflow.ellipsis),
         ],
       ),
