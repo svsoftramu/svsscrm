@@ -119,21 +119,22 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
     setState(() => _actionLoading = true);
     try {
-      // Step 3: Submit work report
-      await ApiService.instance.uploadFile(
-        'attendance/work-report',
-        reportResult['image_path'] ?? '',
-        fields: {
-          'tasks_completed': reportResult['tasks'] ?? '',
-          'notes': reportResult['notes'] ?? '',
-        },
-      ).catchError((_) {
-        // If image upload fails (no image), try without file
-        return ApiService.instance.post('attendance/work-report', {
+      // Step 3: Submit work report (image is optional)
+      if (reportResult['image_path'] != null) {
+        await ApiService.instance.uploadFile(
+          'attendance/work-report',
+          reportResult['image_path']!,
+          fields: {
+            'tasks_completed': reportResult['tasks'] ?? '',
+            'notes': reportResult['notes'] ?? '',
+          },
+        );
+      } else {
+        await ApiService.instance.post('attendance/work-report', {
           'tasks_completed': reportResult['tasks'] ?? '',
           'notes': reportResult['notes'] ?? '',
         });
-      });
+      }
 
       // Step 4: Do checkout
       final response = await provider.checkOut(faceImage: result.base64Image, matchScore: result.matchScore, faceMeshData: result.meshJson);
@@ -203,7 +204,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                     maxLines: 2,
                   ),
                   const SizedBox(height: 12),
-                  const Text('Photo Attachment *', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                  const Text('Photo Attachment (optional)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 6),
                   if (imagePath != null)
                     Stack(
@@ -265,16 +266,10 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             FilledButton.icon(
               onPressed: () {
                 if (!formKey.currentState!.validate()) return;
-                if (imagePath == null) {
-                  ScaffoldMessenger.of(ctx).showSnackBar(
-                    const SnackBar(content: Text('Please attach a photo'), backgroundColor: AppColors.error),
-                  );
-                  return;
-                }
                 Navigator.pop(ctx, {
                   'tasks': tasksC.text.trim(),
                   'notes': notesC.text.trim(),
-                  'image_path': imagePath!,
+                  if (imagePath != null) 'image_path': imagePath!,
                 });
               },
               icon: const Icon(Icons.check_rounded, size: 18),
