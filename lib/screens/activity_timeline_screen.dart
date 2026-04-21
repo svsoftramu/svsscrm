@@ -182,7 +182,7 @@ class _ActivityTimelineScreenState extends State<ActivityTimelineScreen> {
                       try {
                         await context
                             .read<CRMProvider>()
-                            .logActivity(widget.entityId, data);
+                            .logActivity(widget.entityId, data, entityType: widget.entityType);
                         if (ctx.mounted) Navigator.pop(ctx);
                         _fetchActivities();
                         if (ctx.mounted) {

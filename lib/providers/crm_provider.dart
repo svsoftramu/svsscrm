@@ -409,8 +409,12 @@ class CRMProvider with ChangeNotifier {
   }
 
   // ─── CRM: Activity Logging ───
-  Future<void> logActivity(String leadId, Map<String, dynamic> data) async {
-    await _api.post('crm/leads/$leadId/activities', data);
+  Future<void> logActivity(String entityId, Map<String, dynamic> data, {String entityType = 'lead'}) async {
+    if (entityType == 'customer') {
+      await _api.post('crm/customers/$entityId/activities', data);
+    } else {
+      await _api.post('crm/leads/$entityId/activities', data);
+    }
   }
 
   Future<List<Map<String, dynamic>>> fetchLeadActivities(String leadId) async {
