@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -19,6 +20,7 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
   String _sortField = 'datecreated';
   bool _sortAscending = false;
   String? _filterCity;
+  Timer? _debounce;
 
   int get _activeFilterCount => [if (_filterCity != null) 1].length;
 
@@ -32,8 +34,16 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _onSearchChanged(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      if (mounted) setState(() => _searchQuery = value);
+    });
   }
 
   List<Map<String, dynamic>> _filterCustomers(List<Map<String, dynamic>> customers) {
@@ -331,7 +341,7 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       isDense: true,
                     ),
-                    onChanged: (value) => setState(() => _searchQuery = value),
+                    onChanged: _onSearchChanged,
                   ),
                 ),
                 Expanded(

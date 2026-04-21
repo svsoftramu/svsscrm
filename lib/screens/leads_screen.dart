@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -41,6 +42,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
   DateTimeRange? _filterDateRange;
   String _sortField = 'dateadded';
   bool _sortAscending = false;
+  Timer? _debounce;
 
   int get _activeFilterCount => [
     if (_filterStatus != null) 1,
@@ -61,8 +63,16 @@ class _LeadsScreenState extends State<LeadsScreen> {
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _onSearchChanged(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      if (mounted) setState(() => _searchQuery = value);
+    });
   }
 
   List<Map<String, dynamic>> _filterLeads(List<Map<String, dynamic>> leads) {
@@ -422,7 +432,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       isDense: true,
                     ),
-                    onChanged: (value) => setState(() => _searchQuery = value),
+                    onChanged: _onSearchChanged,
                   ),
                 ),
                 Expanded(
