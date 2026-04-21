@@ -474,9 +474,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             const SizedBox(height: 16),
 
             // Staff
-            _statRow(Icons.people_rounded, AppColors.primary, 'Total Staff', _toInt(staff is Map ? (staff['total'] ?? staff['count']) : staff).toString(), colors),
-            if (staff is Map && staff['active'] != null)
-              _statRow(Icons.person_rounded, AppColors.success, 'Active Staff', _toInt(staff['active']).toString(), colors),
+            _statRow(Icons.people_rounded, AppColors.primary, 'Total Staff', _toInt(staff is Map ? (staff['active_count'] ?? staff['total'] ?? staff['count']) : staff).toString(), colors),
             const Divider(height: 24),
 
             // Leads
