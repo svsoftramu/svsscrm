@@ -3,14 +3,16 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
+import 'push_notification_service.dart';
 
 class ReminderService {
   ReminderService._();
   static final ReminderService instance = ReminderService._();
 
   Database? _db;
-  final FlutterLocalNotificationsPlugin _notifications =
-      FlutterLocalNotificationsPlugin();
+  // Reuse the shared plugin instance to avoid iOS double-init crashes
+  FlutterLocalNotificationsPlugin get _notifications =>
+      PushNotificationService.instance.localNotifications;
   final Uuid _uuid = const Uuid();
   bool _isInitialized = false;
 
@@ -21,25 +23,10 @@ class ReminderService {
       'Notifications for CRM scheduled reminders';
 
   /// Initialize the reminder service: database + notifications.
+  /// Reuses the shared notification plugin from PushNotificationService
+  /// to avoid double-initialization conflicts on iOS.
   Future<void> initialize() async {
     if (_isInitialized) return;
-
-    // Initialize notifications
-    const androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
-    const iosSettings = DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
-    );
-    const initSettings = InitializationSettings(
-      android: androidSettings,
-      iOS: iosSettings,
-    );
-    await _notifications.initialize(
-      initSettings,
-      onDidReceiveNotificationResponse: _onNotificationTapped,
-    );
 
     // Initialize database
     final dbPath = await getDatabasesPath();
@@ -67,10 +54,6 @@ class ReminderService {
 
     // Reschedule all future reminders on init
     await rescheduleAllReminders();
-  }
-
-  void _onNotificationTapped(NotificationResponse response) {
-    debugPrint('Notification tapped: ${response.payload}');
   }
 
   /// Schedule a new reminder. Returns the generated reminder ID.

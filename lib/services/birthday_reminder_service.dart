@@ -1,13 +1,16 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'push_notification_service.dart';
 
 class BirthdayReminderService {
   static final BirthdayReminderService instance = BirthdayReminderService._();
   BirthdayReminderService._();
 
-  FlutterLocalNotificationsPlugin? _notifications;
+  // Reuse the shared plugin instance to avoid iOS double-init crashes
+  FlutterLocalNotificationsPlugin get _notifications =>
+      PushNotificationService.instance.localNotifications;
 
   Future<void> init() async {
-    _notifications = FlutterLocalNotificationsPlugin();
+    // No separate init needed — uses shared notification plugin
   }
 
   Future<void> scheduleBirthdayReminders(List<Map<String, dynamic>> birthdays) async {
@@ -31,7 +34,7 @@ class BirthdayReminderService {
       if (delay.isNegative || delay.inDays > 365) continue;
 
       Future.delayed(delay, () {
-        _notifications?.show(
+        _notifications.show(
           id,
           'Birthday Reminder',
           "Today is $name's birthday! Send them a wish.",
@@ -70,7 +73,7 @@ class BirthdayReminderService {
       if (delay.isNegative || delay.inDays > 365) continue;
 
       Future.delayed(delay, () {
-        _notifications?.show(
+        _notifications.show(
           id,
           'Anniversary Reminder',
           "Today is $name's anniversary! Send them your wishes.",
@@ -90,6 +93,6 @@ class BirthdayReminderService {
   }
 
   Future<void> cancelAll() async {
-    await _notifications?.cancelAll();
+    await _notifications.cancelAll();
   }
 }

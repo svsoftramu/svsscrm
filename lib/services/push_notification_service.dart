@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -31,21 +32,32 @@ class PushNotificationService {
     importance: Importance.high,
   );
 
-  Future<void> init() async {
-    // Request permission
-    await _fcm.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
+  /// Shared local notification plugin instance (avoids double-init on iOS).
+  FlutterLocalNotificationsPlugin get localNotifications => _localNotifications;
 
-    // Set up background handler
+  Future<void> init() async {
+    // Set up background handler BEFORE requestPermission
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+    // Request permission
+    try {
+      await _fcm.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+    } catch (e) {
+      debugPrint('[FCM] Permission request failed: $e');
+    }
 
     // Initialize local notifications
     const androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
-    const iosSettings = DarwinInitializationSettings();
+    const iosSettings = DarwinInitializationSettings(
+      requestAlertPermission: false, // Already requested via FCM
+      requestBadgePermission: false,
+      requestSoundPermission: false,
+    );
     await _localNotifications.initialize(
       const InitializationSettings(
         android: androidSettings,
@@ -55,10 +67,12 @@ class PushNotificationService {
     );
 
     // Create Android notification channel
-    await _localNotifications
-        .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(_channel);
+    if (Platform.isAndroid) {
+      await _localNotifications
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()
+          ?.createNotificationChannel(_channel);
+    }
 
     // Handle foreground messages
     FirebaseMessaging.onMessage.listen(_showLocalNotification);
@@ -69,14 +83,20 @@ class PushNotificationService {
     // Check if the app was opened from a terminated state via notification
     final initialMessage = await _fcm.getInitialMessage();
     if (initialMessage != null) {
-      // Slight delay to let the navigator settle
       Future.delayed(const Duration(milliseconds: 500), () {
         _navigateFromData(initialMessage.data);
       });
     }
 
-    // Get and register FCM token (will only send if authenticated)
-    await registerToken();
+    // Set foreground notification presentation options for iOS
+    await _fcm.setForegroundNotificationPresentationOptions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
+    // Register token non-blocking — don't await so it can't hang the app
+    registerToken();
 
     // Listen for token refresh
     _fcm.onTokenRefresh.listen((token) => _sendTokenToServer(token));
@@ -85,7 +105,15 @@ class PushNotificationService {
   /// Call this after login to register the device token with the server.
   Future<void> registerToken() async {
     try {
-      final token = await _fcm.getToken();
+      // On iOS simulator there's no APNs, so getToken() can hang.
+      // Use a timeout to prevent blocking.
+      final token = await _fcm.getToken().timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          debugPrint('[FCM] Token request timed out (no APNs on simulator?)');
+          return null;
+        },
+      );
       if (token != null) {
         debugPrint('[FCM] Token: ${token.substring(0, 20)}...');
         await _sendTokenToServer(token);
@@ -98,7 +126,10 @@ class PushNotificationService {
   /// Unregister the device token from the server (call before logout).
   Future<void> unregisterToken() async {
     try {
-      final token = await _fcm.getToken();
+      final token = await _fcm.getToken().timeout(
+        const Duration(seconds: 5),
+        onTimeout: () => null,
+      );
       if (token != null && ApiService.instance.isAuthenticated) {
         await ApiService.instance.post('push/unregister', {
           'device_token': token,
@@ -114,7 +145,7 @@ class PushNotificationService {
       if (ApiService.instance.isAuthenticated) {
         await ApiService.instance.post('push/register', {
           'device_token': token,
-          'platform': 'android',
+          'platform': Platform.isIOS ? 'ios' : 'android',
         });
       }
     } catch (e) {
@@ -136,29 +167,30 @@ class PushNotificationService {
       } catch (_) {}
     }
 
-    final type = message.data['type'] ?? 'general';
+    // On iOS, if foreground presentation is enabled, the system shows the
+    // notification automatically. Only show via local plugin on Android.
+    if (Platform.isAndroid) {
+      final type = message.data['type'] ?? 'general';
 
-    _localNotifications.show(
-      notification.hashCode,
-      notification.title ?? 'SVSOFT',
-      notification.body ?? '',
-      NotificationDetails(
-        android: AndroidNotificationDetails(
-          _channel.id,
-          _channel.name,
-          channelDescription: _channel.description,
-          icon: '@mipmap/ic_launcher',
-          importance: Importance.high,
-          priority: Priority.high,
-          groupKey: 'svss_crm_$type',
-          setAsGroupSummary: false,
+      _localNotifications.show(
+        notification.hashCode,
+        notification.title ?? 'SVSOFT',
+        notification.body ?? '',
+        NotificationDetails(
+          android: AndroidNotificationDetails(
+            _channel.id,
+            _channel.name,
+            channelDescription: _channel.description,
+            icon: '@mipmap/ic_launcher',
+            importance: Importance.high,
+            priority: Priority.high,
+            groupKey: 'svss_crm_$type',
+            setAsGroupSummary: false,
+          ),
         ),
-        iOS: DarwinNotificationDetails(
-          threadIdentifier: type,
-        ),
-      ),
-      payload: jsonEncode(message.data),
-    );
+        payload: jsonEncode(message.data),
+      );
+    }
   }
 
   void _onNotificationTapped(NotificationResponse response) {

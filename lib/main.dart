@@ -22,25 +22,17 @@ void main() async {
   await CacheService.instance.init();
   await OfflineSyncService.instance.init();
 
-  // Initialize Firebase & push notifications
+  // Initialize Firebase — must complete before runApp for FCM to work
+  bool firebaseReady = false;
   try {
     await Firebase.initializeApp();
-    await PushNotificationService.instance.init();
-    // Enable Firebase In-App Messaging
-    FirebaseInAppMessaging.instance.setAutomaticDataCollectionEnabled(true);
+    firebaseReady = true;
   } catch (e) {
     debugPrint('[INIT] Firebase init failed: $e');
   }
 
-  // Initialize reminder services
-  try {
-    await ReminderService.instance.initialize();
-    await ReminderService.instance.rescheduleAllReminders();
-    await BirthdayReminderService.instance.init();
-  } catch (e) {
-    debugPrint('[INIT] Reminder services init failed: $e');
-  }
-
+  // Launch the app first, then init push/reminders in the background
+  // This prevents white screen if FCM token fetch hangs (iOS simulator)
   runApp(
     MultiProvider(
       providers: [
@@ -51,6 +43,23 @@ void main() async {
       child: const MyCrmApp(),
     ),
   );
+
+  // Post-launch initialization (non-blocking)
+  if (firebaseReady) {
+    try {
+      await PushNotificationService.instance.init();
+      FirebaseInAppMessaging.instance.setAutomaticDataCollectionEnabled(true);
+    } catch (e) {
+      debugPrint('[INIT] Push notification init failed: $e');
+    }
+  }
+
+  try {
+    await ReminderService.instance.initialize();
+    await BirthdayReminderService.instance.init();
+  } catch (e) {
+    debugPrint('[INIT] Reminder services init failed: $e');
+  }
 }
 
 class MyCrmApp extends StatelessWidget {
