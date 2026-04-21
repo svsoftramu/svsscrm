@@ -94,7 +94,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       case 'leave':
         return AppColors.cardOrange;
       default:
-        return AppColors.surfaceVariant;
+        return Theme.of(context).colorScheme.surfaceContainerHighest;
     }
   }
 
@@ -164,21 +164,21 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                        color: AppColors.surfaceVariant,
+                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(20)),
-                    child: const Icon(Icons.notifications_none_rounded,
-                        size: 40, color: AppColors.textMuted),
+                    child: Icon(Icons.notifications_none_rounded,
+                        size: 40, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4)),
                   ),
                   const SizedBox(height: 16),
-                  const Text('No notifications',
+                  Text('No notifications',
                       style: TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: 16,
-                          color: AppColors.textPrimary)),
+                          color: Theme.of(context).colorScheme.onSurface)),
                   const SizedBox(height: 4),
-                  const Text("You're all caught up!",
+                  Text("You're all caught up!",
                       style: TextStyle(
-                          color: AppColors.textSecondary, fontSize: 13)),
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 13)),
                 ],
               ),
             );
@@ -211,10 +211,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       padding: const EdgeInsets.only(top: 12, bottom: 8),
                       child: Text(
                         key,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.textSecondary,
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -265,7 +265,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 height: 40,
                 decoration: BoxDecoration(
                   color: isRead
-                      ? AppColors.surfaceVariant
+                      ? Theme.of(context).colorScheme.surfaceContainerHighest
                       : _iconBgForType(type),
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -286,7 +286,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         fontWeight:
                             isRead ? FontWeight.w500 : FontWeight.w700,
                         fontSize: 14,
-                        color: AppColors.textPrimary,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     if (body.toString().isNotEmpty) ...[
@@ -295,16 +295,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         body.toString(),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            fontSize: 13, color: AppColors.textSecondary),
+                        style: TextStyle(
+                            fontSize: 13, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
                       ),
                     ],
                     if (dateStr.toString().isNotEmpty) ...[
                       const SizedBox(height: 4),
                       Text(
                         _formatTime(dateStr.toString()),
-                        style: const TextStyle(
-                            fontSize: 11, color: AppColors.textMuted),
+                        style: TextStyle(
+                            fontSize: 11, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4)),
                       ),
                     ],
                   ],

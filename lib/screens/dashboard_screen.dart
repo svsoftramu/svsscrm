@@ -236,6 +236,77 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  /// Returns true if the user is currently clocked in (state 1).
+  /// Shows a gate dialog and returns false otherwise.
+  bool _requireCheckedIn(BuildContext context) {
+    final provider = context.read<CRMProvider>();
+    final today = provider.attendanceToday;
+    final hasIn  = today['check_in'] != null || today['checkin_time'] != null;
+    final hasOut = today['check_out'] != null || today['checkout_time'] != null;
+
+    if (hasIn && !hasOut) return true; // working — allow
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        contentPadding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 64, height: 64,
+              decoration: BoxDecoration(
+                color: (hasOut ? AppColors.success : AppColors.primary).withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                hasOut ? Icons.check_circle_rounded : Icons.login_rounded,
+                color: hasOut ? AppColors.success : AppColors.primary, size: 32,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              hasOut ? 'Day Completed' : 'Please Check In First',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              hasOut
+                  ? 'You have already checked out for today.\nSee you tomorrow!'
+                  : 'You need to clock in before accessing this section.',
+              style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), height: 1.4),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            if (!hasOut)
+              SizedBox(
+                width: double.infinity, height: 46,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const AttendanceScreen()));
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  child: const Text('Go to Attendance', style: TextStyle(fontWeight: FontWeight.w600)),
+                ),
+              ),
+            SizedBox(
+              width: double.infinity, height: 40,
+              child: TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Dismiss')),
+            ),
+          ],
+        ),
+      ),
+    );
+    return false;
+  }
+
   Widget _buildQuickActions(BuildContext context) {
     final actions = [
       _QuickActionChip(
@@ -250,28 +321,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
         label: 'New Task',
         color: AppColors.primary,
         bgColor: AppColors.cardBlue,
-        onTap: () => showAddTaskSheet(context),
+        onTap: () { if (_requireCheckedIn(context)) showAddTaskSheet(context); },
       ),
       _QuickActionChip(
         icon: Icons.description_rounded,
         label: 'Estimates',
         color: const Color(0xFF8B5CF6),
         bgColor: AppColors.cardPurple,
-        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const EstimatesScreen())),
+        onTap: () { if (_requireCheckedIn(context)) Navigator.push(context, MaterialPageRoute(builder: (_) => const EstimatesScreen())); },
       ),
       _QuickActionChip(
         icon: Icons.receipt_long_rounded,
         label: 'Invoices',
         color: const Color(0xFF14B8A6),
         bgColor: AppColors.cardTeal,
-        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const InvoicesScreen())),
+        onTap: () { if (_requireCheckedIn(context)) Navigator.push(context, MaterialPageRoute(builder: (_) => const InvoicesScreen())); },
       ),
       _QuickActionChip(
         icon: Icons.location_on_rounded,
         label: 'Visits',
         color: const Color(0xFFEF4444),
         bgColor: AppColors.cardRed,
-        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ClientVisitsScreen())),
+        onTap: () { if (_requireCheckedIn(context)) Navigator.push(context, MaterialPageRoute(builder: (_) => const ClientVisitsScreen())); },
       ),
     ];
 

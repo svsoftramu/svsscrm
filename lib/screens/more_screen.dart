@@ -322,7 +322,7 @@ class _SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
-      child: Text(title, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textMuted, letterSpacing: 1.2)),
+      child: Text(title, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.adaptive(context).textMuted, letterSpacing: 1.2)),
     );
   }
 }
@@ -358,7 +358,7 @@ class _MenuTile extends StatelessWidget {
                   decoration: BoxDecoration(color: AppColors.error, borderRadius: BorderRadius.circular(10)),
                   child: Text('$badge', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
                 )
-              : Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textMuted))
+              : Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF64748B) : AppColors.textMuted))
           : null,
       onTap: onTap,
     );
@@ -386,9 +386,9 @@ class _GenericListScreen extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.inbox_rounded, size: 48, color: AppColors.textMuted),
+                  Icon(Icons.inbox_rounded, size: 48, color: AppColors.adaptive(context).textMuted),
                   const SizedBox(height: 12),
-                  Text('No $title found', style: const TextStyle(color: AppColors.textSecondary)),
+                  Text('No $title found', style: TextStyle(color: AppColors.adaptive(context).textSecondary)),
                 ],
               ),
             );
@@ -405,7 +405,7 @@ class _GenericListScreen extends StatelessWidget {
                 margin: const EdgeInsets.only(bottom: 8),
                 child: ListTile(
                   title: Text(displayTitle.toString(), style: const TextStyle(fontWeight: FontWeight.w600)),
-                  subtitle: subtitle.toString().isNotEmpty ? Text(subtitle.toString(), style: const TextStyle(color: AppColors.textSecondary)) : null,
+                  subtitle: subtitle.toString().isNotEmpty ? Text(subtitle.toString(), style: TextStyle(color: AppColors.adaptive(context).textSecondary)) : null,
                 ),
               );
             },

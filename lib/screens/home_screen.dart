@@ -103,9 +103,9 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Icon(icon, color: color, size: 32),
             ),
             const SizedBox(height: 16),
-            Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary), textAlign: TextAlign.center),
+            Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface), textAlign: TextAlign.center),
             const SizedBox(height: 8),
-            Text(message, style: const TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.4), textAlign: TextAlign.center),
+            Text(message, style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), height: 1.4), textAlign: TextAlign.center),
             const SizedBox(height: 20),
             if (buttonText != null)
               SizedBox(
@@ -158,8 +158,8 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           floatingActionButton: _currentIndex <= 1 && attendanceState == 1 ? const QuickLogFAB() : null,
           bottomNavigationBar: Container(
-            decoration: const BoxDecoration(
-              border: Border(top: BorderSide(color: Color(0xFFE2E8F0), width: 1)),
+            decoration: BoxDecoration(
+              border: Border(top: BorderSide(color: Theme.of(context).dividerColor, width: 1)),
             ),
             child: NavigationBar(
               selectedIndex: _currentIndex,
