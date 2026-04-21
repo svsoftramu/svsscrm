@@ -121,21 +121,28 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           Consumer<CRMProvider>(
             builder: (context, provider, _) {
               if (provider.unreadCount > 0) {
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: Chip(
-                    label: Text(
-                      '${provider.unreadCount} unread',
-                      style: const TextStyle(
-                          fontSize: 11,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600),
+                return Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Chip(
+                      label: Text(
+                        '${provider.unreadCount} unread',
+                        style: const TextStyle(
+                            fontSize: 11,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600),
+                      ),
+                      backgroundColor: AppColors.primary,
+                      padding: EdgeInsets.zero,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      visualDensity: VisualDensity.compact,
                     ),
-                    backgroundColor: AppColors.primary,
-                    padding: EdgeInsets.zero,
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    visualDensity: VisualDensity.compact,
-                  ),
+                    IconButton(
+                      icon: const Icon(Icons.done_all_rounded, size: 20),
+                      tooltip: 'Mark all as read',
+                      onPressed: () => provider.markAllNotificationsRead(),
+                    ),
+                  ],
                 );
               }
               return const SizedBox.shrink();

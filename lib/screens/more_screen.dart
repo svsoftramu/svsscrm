@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/crm_provider.dart';
 import '../providers/theme_provider.dart';
 import '../services/api_service.dart';
+import '../services/push_notification_service.dart';
 import '../theme/app_theme.dart';
 import 'attendance_screen.dart';
 import 'notifications_screen.dart';
@@ -301,6 +302,7 @@ class MoreScreen extends StatelessWidget {
       ),
     );
     if (confirmed == true && context.mounted) {
+      await PushNotificationService.instance.unregisterToken();
       await ApiService.instance.logout();
       if (context.mounted) {
         Navigator.of(context).pushAndRemoveUntil(

@@ -7,6 +7,8 @@ import '../screens/notifications_screen.dart';
 import '../screens/task_screen.dart';
 import '../screens/leads_screen.dart';
 import '../screens/leave_screen.dart';
+import 'package:provider/provider.dart';
+import '../providers/crm_provider.dart';
 import 'api_service.dart';
 
 @pragma('vm:entry-point')
@@ -93,6 +95,20 @@ class PushNotificationService {
     }
   }
 
+  /// Unregister the device token from the server (call before logout).
+  Future<void> unregisterToken() async {
+    try {
+      final token = await _fcm.getToken();
+      if (token != null && ApiService.instance.isAuthenticated) {
+        await ApiService.instance.post('push/unregister', {
+          'device_token': token,
+        });
+      }
+    } catch (e) {
+      debugPrint('[FCM] Error unregistering token: $e');
+    }
+  }
+
   Future<void> _sendTokenToServer(String token) async {
     try {
       if (ApiService.instance.isAuthenticated) {
@@ -110,6 +126,18 @@ class PushNotificationService {
     final notification = message.notification;
     if (notification == null) return;
 
+    // Refresh notifications and unread count in the provider
+    final ctx = navigatorKey.currentContext;
+    if (ctx != null) {
+      try {
+        final provider = ctx.read<CRMProvider>();
+        provider.fetchUnreadCount();
+        provider.fetchNotifications();
+      } catch (_) {}
+    }
+
+    final type = message.data['type'] ?? 'general';
+
     _localNotifications.show(
       notification.hashCode,
       notification.title ?? 'SVSOFT',
@@ -122,8 +150,12 @@ class PushNotificationService {
           icon: '@mipmap/ic_launcher',
           importance: Importance.high,
           priority: Priority.high,
+          groupKey: 'svss_crm_$type',
+          setAsGroupSummary: false,
         ),
-        iOS: const DarwinNotificationDetails(),
+        iOS: DarwinNotificationDetails(
+          threadIdentifier: type,
+        ),
       ),
       payload: jsonEncode(message.data),
     );

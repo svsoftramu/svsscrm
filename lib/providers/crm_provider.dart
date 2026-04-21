@@ -777,6 +777,13 @@ class CRMProvider with ChangeNotifier {
     await fetchUnreadCount();
   }
 
+  Future<void> markAllNotificationsRead() async {
+    await _api.post('notifications/read-all', {});
+    await fetchNotifications();
+    _unreadCount = 0;
+    notifyListeners();
+  }
+
   // ─── Announcements & Holidays ───
   Future<void> fetchAnnouncements() async {
     try {
