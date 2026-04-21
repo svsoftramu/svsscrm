@@ -358,6 +358,8 @@ class _AddVisitScreenState extends State<_AddVisitScreen> {
   final _notesC = TextEditingController();
   final _meetingNotesC = TextEditingController();
 
+  // Visit type: 'client' or 'lead'
+  String _visitType = 'client';
   String _purpose = 'meeting';
   Position? _position;
   String _address = '';
@@ -365,7 +367,9 @@ class _AddVisitScreenState extends State<_AddVisitScreen> {
   bool _submitting = false;
   final List<String> _photoPaths = [];
   List<Map<String, dynamic>> _customers = [];
+  List<Map<String, dynamic>> _leads = [];
   String? _selectedCustomerId;
+  String? _selectedLeadId;
 
   static const _purposes = ['meeting', 'demo', 'support', 'delivery', 'follow_up', 'other'];
 
@@ -374,6 +378,7 @@ class _AddVisitScreenState extends State<_AddVisitScreen> {
     super.initState();
     _getLocation();
     _fetchCustomers();
+    _fetchLeads();
   }
 
   @override
@@ -391,6 +396,18 @@ class _AddVisitScreenState extends State<_AddVisitScreen> {
       if (data is List && mounted) {
         setState(() {
           _customers = data.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+        });
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _fetchLeads() async {
+    try {
+      final res = await ApiService.instance.get('crm/leads');
+      final data = res['data'];
+      if (data is List && mounted) {
+        setState(() {
+          _leads = data.map((e) => Map<String, dynamic>.from(e as Map)).toList();
         });
       }
     } catch (_) {}
@@ -515,6 +532,7 @@ class _AddVisitScreenState extends State<_AddVisitScreen> {
     setState(() => _submitting = true);
     try {
       final data = <String, String>{
+        'visit_type': _visitType,
         'purpose': _purpose,
         'client_name': _clientNameC.text.trim(),
         'notes': _notesC.text.trim(),
@@ -524,8 +542,11 @@ class _AddVisitScreenState extends State<_AddVisitScreen> {
         'address': _address,
         'visit_date': DateTime.now().toIso8601String(),
       };
-      if (_selectedCustomerId != null) {
+      if (_visitType == 'client' && _selectedCustomerId != null) {
         data['customer_id'] = _selectedCustomerId!;
+      }
+      if (_visitType == 'lead' && _selectedLeadId != null) {
+        data['lead_id'] = _selectedLeadId!;
       }
 
       // Upload with photos if any
@@ -647,12 +668,90 @@ class _AddVisitScreenState extends State<_AddVisitScreen> {
             ),
             const SizedBox(height: 20),
 
-            // Client selection
-            const Text('Client', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+            // Visit Type selector
+            Text('Visit For', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
             const SizedBox(height: 8),
-            if (_customers.isNotEmpty)
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => setState(() {
+                      _visitType = 'client';
+                      _selectedLeadId = null;
+                      _clientNameC.clear();
+                    }),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      decoration: BoxDecoration(
+                        color: _visitType == 'client' ? AppColors.primary.withValues(alpha: 0.12) : Colors.transparent,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _visitType == 'client' ? AppColors.primary : Theme.of(context).dividerColor,
+                          width: _visitType == 'client' ? 2 : 1,
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Icon(Icons.business_rounded, color: _visitType == 'client' ? AppColors.primary : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5), size: 28),
+                          const SizedBox(height: 6),
+                          Text('Client', style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: _visitType == 'client' ? FontWeight.w700 : FontWeight.w500,
+                            color: _visitType == 'client' ? AppColors.primary : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                          )),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => setState(() {
+                      _visitType = 'lead';
+                      _selectedCustomerId = null;
+                      _clientNameC.clear();
+                    }),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      decoration: BoxDecoration(
+                        color: _visitType == 'lead' ? AppColors.accent.withValues(alpha: 0.12) : Colors.transparent,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _visitType == 'lead' ? AppColors.accent : Theme.of(context).dividerColor,
+                          width: _visitType == 'lead' ? 2 : 1,
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Icon(Icons.person_search_rounded, color: _visitType == 'lead' ? AppColors.accent : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5), size: 28),
+                          const SizedBox(height: 6),
+                          Text('Lead', style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: _visitType == 'lead' ? FontWeight.w700 : FontWeight.w500,
+                            color: _visitType == 'lead' ? AppColors.accent : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                          )),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // Person selection based on visit type
+            Text(
+              _visitType == 'client' ? 'Select Client' : 'Select Lead',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
+            ),
+            const SizedBox(height: 8),
+            if (_visitType == 'client' && _customers.isNotEmpty)
               DropdownButtonFormField<String>(
-                value: _selectedCustomerId, // ignore: deprecated_member_use
+                // ignore: deprecated_member_use
+                value: _selectedCustomerId,
                 items: [
                   const DropdownMenuItem(value: null, child: Text('Select existing client...')),
                   ..._customers.map((c) {
@@ -679,15 +778,47 @@ class _AddVisitScreenState extends State<_AddVisitScreen> {
                 ),
                 isExpanded: true,
               ),
+            if (_visitType == 'lead' && _leads.isNotEmpty)
+              DropdownButtonFormField<String>(
+                // ignore: deprecated_member_use
+                value: _selectedLeadId,
+                items: [
+                  const DropdownMenuItem(value: null, child: Text('Select a lead...')),
+                  ..._leads.map((l) {
+                    final id = (l['id'] ?? '').toString();
+                    final name = (l['name'] ?? l['company'] ?? '').toString();
+                    final company = (l['company'] ?? '').toString();
+                    final display = company.isNotEmpty && company != name ? '$name ($company)' : name;
+                    return DropdownMenuItem(value: id, child: Text(display, overflow: TextOverflow.ellipsis));
+                  }),
+                ],
+                onChanged: (val) {
+                  setState(() => _selectedLeadId = val);
+                  if (val != null) {
+                    final l = _leads.firstWhere(
+                      (l) => (l['id'] ?? '').toString() == val,
+                      orElse: () => {},
+                    );
+                    if (l.isNotEmpty) {
+                      _clientNameC.text = (l['name'] ?? l['company'] ?? '').toString();
+                    }
+                  }
+                },
+                decoration: const InputDecoration(
+                  prefixIcon: Icon(Icons.person_search_rounded, size: 20),
+                  border: OutlineInputBorder(),
+                ),
+                isExpanded: true,
+              ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _clientNameC,
-              decoration: const InputDecoration(
-                labelText: 'Client / Company Name *',
-                prefixIcon: Icon(Icons.person_rounded, size: 20),
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: _visitType == 'client' ? 'Client / Company Name *' : 'Lead Name *',
+                prefixIcon: Icon(_visitType == 'client' ? Icons.person_rounded : Icons.person_search_rounded, size: 20),
+                border: const OutlineInputBorder(),
               ),
-              validator: (v) => v == null || v.trim().isEmpty ? 'Client name is required' : null,
+              validator: (v) => v == null || v.trim().isEmpty ? 'Name is required' : null,
             ),
             const SizedBox(height: 16),
 
