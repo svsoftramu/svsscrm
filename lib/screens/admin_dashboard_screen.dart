@@ -207,7 +207,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       _KPI('Payments Pending', _formatCurrency(_data['payments_pending']), Icons.schedule_rounded, colors.cardOrange, AppColors.warning),
       _KPI('Total Expenses', _formatCurrency(_data['total_expenses']), Icons.receipt_long_rounded, colors.cardRed, AppColors.error),
       _KPI('Gross Profit', _formatCurrency(_data['gross_profit']), Icons.bar_chart_rounded, colors.cardPurple, const Color(0xFF8B5CF6)),
-      _KPI('Net Profit', _formatCurrency(_data['net_profit']), Icons.emoji_events_rounded, colors.cardTeal, const Color(0xFF06B6D4)),
+      _KPI('Net Profit', _formatCurrency(_data['net_profit']), Icons.emoji_events_rounded, colors.cardTeal, _toDouble(_data['net_profit']) >= 0 ? const Color(0xFF06B6D4) : AppColors.error),
     ];
 
     return GridView.builder(
@@ -270,9 +270,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   Widget _buildRevenueVsExpensesChart(AdaptiveColors colors) {
     final revenue = _toDouble(_data['total_sales']);
-    final expenses = _toDouble(_data['total_expenses']);
-    final salaries = _toDouble(_data['total_salaries']);
-    final maxY = [revenue, expenses, salaries].reduce((a, b) => a > b ? a : b);
+    final expenses = _toDouble(_data['total_expenses']); // includes salaries
+    final profit = _toDouble(_data['net_profit']);
+    final maxY = [revenue, expenses, profit.abs()].reduce((a, b) => a > b ? a : b);
 
     return Card(
       child: Padding(
@@ -282,12 +282,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           children: [
             Text('Revenue vs Expenses', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: colors.textPrimary)),
             const SizedBox(height: 4),
-            Text('Financial overview', style: TextStyle(fontSize: 12, color: colors.textMuted)),
+            Text('Expenses include salaries, employee claims & company expenses', style: TextStyle(fontSize: 11, color: colors.textMuted)),
             const SizedBox(height: 20),
             SizedBox(
               height: 200,
-              child: (revenue == 0 && expenses == 0 && salaries == 0)
-                  ? Center(child: Text('No data available', style: TextStyle(color: colors.textMuted)))
+              child: (revenue == 0 && expenses == 0)
+                  ? Center(child: Text('No data for this period', style: TextStyle(color: colors.textMuted)))
                   : BarChart(
                       BarChartData(
                         alignment: BarChartAlignment.spaceAround,
@@ -296,10 +296,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           touchTooltipData: BarTouchTooltipData(
                             tooltipRoundedRadius: 8,
                             getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                              final labels = ['Revenue', 'Expenses', 'Salaries'];
+                              final labels = ['Revenue', 'Expenses', 'Net Profit'];
                               return BarTooltipItem(
                                 '${labels[groupIndex]}\n${_formatCurrency(rod.toY)}',
-                                TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                                const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
                               );
                             },
                           ),
@@ -310,7 +310,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                             sideTitles: SideTitles(
                               showTitles: true,
                               getTitlesWidget: (value, meta) {
-                                final labels = ['Revenue', 'Expenses', 'Salaries'];
+                                final labels = ['Revenue', 'Expenses', 'Net Profit'];
                                 final idx = value.toInt();
                                 if (idx >= 0 && idx < labels.length) {
                                   return Padding(
@@ -331,7 +331,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         barGroups: [
                           _makeBarGroup(0, revenue, AppColors.primary),
                           _makeBarGroup(1, expenses, AppColors.error),
-                          _makeBarGroup(2, salaries, const Color(0xFF8B5CF6)),
+                          _makeBarGroup(2, profit >= 0 ? profit : 0, AppColors.success),
                         ],
                       ),
                     ),
@@ -344,7 +344,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 const SizedBox(width: 16),
                 _legendDot(AppColors.error, 'Expenses'),
                 const SizedBox(width: 16),
-                _legendDot(const Color(0xFF8B5CF6), 'Salaries'),
+                _legendDot(AppColors.success, 'Net Profit'),
               ],
             ),
           ],
