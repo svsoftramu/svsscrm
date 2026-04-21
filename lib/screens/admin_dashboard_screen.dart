@@ -15,7 +15,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   Map<String, dynamic> _data = {};
   bool _loading = true;
   String? _error;
-  String _period = 'year';
+  String _period = 'month';
   DateTimeRange? _customRange;
 
   final _periodOptions = const {
