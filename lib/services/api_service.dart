@@ -23,7 +23,7 @@ class ApiService {
     if (userJson != null) {
       _userData = jsonDecode(userJson);
     }
-    debugPrint('[API] init: token=${_token != null ? "${_token!.substring(0, 20)}..." : "null"}');
+    debugPrint('[API] init: token=${_token != null ? "present" : "null"}');
   }
 
   Map<String, dynamic>? get userData => _userData;
@@ -44,7 +44,7 @@ class ApiService {
 
     final data = await _handleResponse(response);
     final token = data['data']?['access_token'];
-    debugPrint('[API] LOGIN token=${token != null ? "${token.toString().substring(0, 30)}..." : "NULL"}');
+    debugPrint('[API] LOGIN token=${token != null ? "received" : "NULL"}');
     if (token != null) {
       _token = token;
       _userData = data['data']?['user'];

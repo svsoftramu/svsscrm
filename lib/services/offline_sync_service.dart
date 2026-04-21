@@ -103,6 +103,7 @@ class OfflineSyncService {
   }
 
   Future<void> _updatePendingCount() async {
+    if (_db == null) return;
     final count = Sqflite.firstIntValue(await _db!.rawQuery('SELECT COUNT(*) FROM action_queue'));
     pendingCount.value = count ?? 0;
   }

@@ -115,7 +115,7 @@ class PushNotificationService {
         },
       );
       if (token != null) {
-        debugPrint('[FCM] Token: ${token.substring(0, 20)}...');
+        debugPrint('[FCM] Token received (${token.length} chars)');
         await _sendTokenToServer(token);
       }
     } catch (e) {
