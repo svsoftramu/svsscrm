@@ -197,13 +197,16 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
                       children: [
                         Container(
                           padding: const EdgeInsets.all(24),
-                          decoration: BoxDecoration(color: AppColors.surfaceVariant, borderRadius: BorderRadius.circular(24)),
-                          child: const Icon(Icons.chat_outlined, size: 48, color: AppColors.textMuted),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                          child: Icon(Icons.chat_outlined, size: 48, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4)),
                         ),
                         const SizedBox(height: 16),
-                        const Text('No messages yet', style: TextStyle(color: AppColors.textSecondary, fontSize: 15, fontWeight: FontWeight.w500)),
+                        Text('No messages yet', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 15, fontWeight: FontWeight.w500)),
                         const SizedBox(height: 4),
-                        const Text('Say hello! 👋', style: TextStyle(color: AppColors.textMuted, fontSize: 13)),
+                        Text('Say hello!', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4), fontSize: 13)),
                       ],
                     ),
                   );
@@ -226,8 +229,8 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
           if (_replyingTo != null)
             Container(
               padding: const EdgeInsets.fromLTRB(16, 8, 8, 0),
-              decoration: const BoxDecoration(
-                border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+              decoration: BoxDecoration(
+                border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
               ),
               child: Row(
                 children: [
@@ -243,7 +246,7 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
                         ),
                         Text(
                           (_replyingTo!['text'] ?? _replyingTo!['message'] ?? '').toString(),
-                          style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+                          style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4)),
                           maxLines: 1, overflow: TextOverflow.ellipsis,
                         ),
                       ],
