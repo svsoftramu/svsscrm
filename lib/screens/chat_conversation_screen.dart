@@ -262,14 +262,14 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
             padding: EdgeInsets.fromLTRB(8, 8, 8, 8 + MediaQuery.of(context).padding.bottom),
             decoration: BoxDecoration(
               color: Theme.of(context).scaffoldBackgroundColor,
-              border: const Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+              border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 // Attachment button
                 IconButton(
-                  icon: const Icon(Icons.add_rounded, color: AppColors.textSecondary, size: 24),
+                  icon: Icon(Icons.add_rounded, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), size: 24),
                   onPressed: _sendImage,
                   constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
                   padding: EdgeInsets.zero,
@@ -278,7 +278,7 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
                 Expanded(
                   child: Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F9),
+                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(24),
                     ),
                     child: TextField(
@@ -346,10 +346,10 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
               decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9),
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.textMuted)),
+              child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4))),
             ),
           ),
         );
@@ -377,14 +377,14 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
               margin: EdgeInsets.only(bottom: 3, top: showSenderName ? 8 : 0),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                color: isMe ? AppColors.primary : Colors.white,
+                color: isMe ? AppColors.primary : (Theme.of(context).cardTheme.color ?? Theme.of(context).colorScheme.surface),
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(18),
                   topRight: const Radius.circular(18),
                   bottomLeft: isMe ? const Radius.circular(18) : const Radius.circular(4),
                   bottomRight: isMe ? const Radius.circular(4) : const Radius.circular(18),
                 ),
-                border: isMe ? null : Border.all(color: const Color(0xFFE2E8F0)),
+                border: isMe ? null : Border.all(color: Theme.of(context).dividerColor),
                 boxShadow: [
                   BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 4, offset: const Offset(0, 1)),
                 ],
@@ -413,7 +413,7 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
 
                   // Text
                   if (text.isNotEmpty)
-                    Text(text, style: TextStyle(fontSize: 14.5, color: isMe ? Colors.white : AppColors.textPrimary, height: 1.35)),
+                    Text(text, style: TextStyle(fontSize: 14.5, color: isMe ? Colors.white : Theme.of(context).colorScheme.onSurface, height: 1.35)),
 
                   // Time + status
                   const SizedBox(height: 4),
