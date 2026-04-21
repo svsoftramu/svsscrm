@@ -15,14 +15,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   Map<String, dynamic> _data = {};
   bool _loading = true;
   String? _error;
-  String _period = 'this_month';
+  String _period = 'year';
   DateTimeRange? _customRange;
 
   final _periodOptions = const {
     'today': 'Today',
-    'this_week': 'This Week',
-    'this_month': 'This Month',
-    'this_year': 'This Year',
+    'week': 'This Week',
+    'month': 'This Month',
+    'year': 'This Year',
     'custom': 'Custom',
   };
 
