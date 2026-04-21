@@ -198,7 +198,7 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen> {
     // Calculate total hours from records
     double totalHours = 0;
     for (final r in _records) {
-      final h = r['hours_worked'] ?? r['total_hours'];
+      final h = r['working_hours'] ?? r['hours_worked'] ?? r['total_hours'];
       if (h != null) {
         totalHours += double.tryParse(h.toString()) ?? 0;
       }

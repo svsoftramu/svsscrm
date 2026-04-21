@@ -430,7 +430,13 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                             Container(width: 1, height: 40, color: Colors.white.withValues(alpha: 0.2)),
                             _TimeBox(label: 'Check Out', time: _formatTime(today['check_out'] ?? today['checkout_time']), icon: Icons.logout_rounded),
                             Container(width: 1, height: 40, color: Colors.white.withValues(alpha: 0.2)),
-                            _TimeBox(label: 'Status', time: today['status']?.toString() ?? '--', icon: Icons.verified_rounded),
+                            _TimeBox(
+                              label: 'Hours',
+                              time: today['working_hours'] != null
+                                  ? '${double.tryParse(today['working_hours'].toString())?.toStringAsFixed(1) ?? '--'}h'
+                                  : '--',
+                              icon: Icons.timer_rounded,
+                            ),
                           ],
                         ),
                       ] else
@@ -507,6 +513,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                     final checkOut = _formatTime(record['check_out'] ?? record['checkout_time']);
                     final status = record['status'] ?? '';
                     final isPresent = status.toString().toLowerCase() == 'present';
+                    final hours = record['working_hours'] ?? record['total_hours'];
+                    final hoursStr = hours != null ? '${double.tryParse(hours.toString())?.toStringAsFixed(1) ?? '--'}h' : '';
 
                     return Card(
                       margin: const EdgeInsets.only(bottom: 8),
@@ -532,7 +540,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                                 children: [
                                   Text(date.toString(), style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                                   const SizedBox(height: 2),
-                                  Text('In: $checkIn  |  Out: $checkOut', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                                  Text('In: $checkIn  |  Out: $checkOut${hoursStr.isNotEmpty ? '  |  $hoursStr' : ''}', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                                 ],
                               ),
                             ),
