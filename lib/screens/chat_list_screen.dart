@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../providers/chat_provider.dart';
 import '../providers/crm_provider.dart';
+import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 import 'chat_conversation_screen.dart';
 
@@ -498,7 +499,13 @@ class _NewChatSheetState extends State<_NewChatSheet> {
         Expanded(
           child: Consumer<CRMProvider>(
             builder: (context, provider, _) {
-              var members = provider.directory.toList();
+              // Exclude current user from the list — can't chat with yourself
+              final currentUserId = (ApiService.instance.userData?['staffid'] ?? ApiService.instance.userData?['id'] ?? '').toString();
+              var members = provider.directory.where((m) {
+                final id = (m['staffid'] ?? m['id'] ?? '').toString();
+                return id != currentUserId;
+              }).toList();
+
               if (_search.isNotEmpty) {
                 final q = _search.toLowerCase();
                 members = members.where((m) {
@@ -507,8 +514,17 @@ class _NewChatSheetState extends State<_NewChatSheet> {
                 }).toList();
               }
 
-              if (members.isEmpty) {
+              if (provider.directory.isEmpty) {
                 return const Center(child: CircularProgressIndicator(strokeWidth: 2));
+              }
+
+              if (members.isEmpty) {
+                return Center(
+                  child: Text(
+                    _search.isNotEmpty ? 'No results found' : 'No other team members found',
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5)),
+                  ),
+                );
               }
 
               return ListView.builder(
