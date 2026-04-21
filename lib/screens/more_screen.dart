@@ -18,6 +18,7 @@ import 'documents_screen.dart';
 import 'login_screen.dart';
 // import 'reports_screen.dart'; // Removed
 
+import 'admin_dashboard_screen.dart';
 import 'chat_list_screen.dart';
 import 'task_calendar_screen.dart';
 
@@ -138,6 +139,11 @@ class MoreScreen extends StatelessWidget {
             child: Card(
               child: Column(
                 children: [
+                  if (user?['admin'] == 1 || user?['admin'] == true || user?['is_admin'] == 1 || user?['is_admin'] == true)
+                    _MenuTile(icon: Icons.analytics_rounded, title: 'Admin Dashboard', color: const Color(0xFFEC4899),
+                        onTap: () => _push(context, const AdminDashboardScreen())),
+                  if (user?['admin'] == 1 || user?['admin'] == true || user?['is_admin'] == 1 || user?['is_admin'] == true)
+                    const Divider(height: 1, indent: 56),
                   _MenuTile(icon: Icons.folder_rounded, title: 'Projects', color: const Color(0xFF8B5CF6),
                       onTap: () => _push(context, const ProjectsScreen())),
                   const Divider(height: 1, indent: 56),

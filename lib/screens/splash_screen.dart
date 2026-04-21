@@ -36,7 +36,7 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _navigateAfterDelay() async {
-    await Future.delayed(const Duration(seconds: 2));
+    await Future.delayed(const Duration(milliseconds: 1200));
     if (!mounted) return;
 
     final isLoggedIn = ApiService.instance.isAuthenticated;

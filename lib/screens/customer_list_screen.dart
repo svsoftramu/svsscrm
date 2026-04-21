@@ -4,7 +4,6 @@ import 'package:url_launcher/url_launcher.dart';
 import '../providers/crm_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/error_widget.dart';
-import '../widgets/empty_state_widget.dart';
 import 'activity_timeline_screen.dart';
 
 class CustomerListScreen extends StatefulWidget {
@@ -77,6 +76,30 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
     });
 
     return filtered;
+  }
+
+  /// Compute stats from the full customer list.
+  Map<String, int> _computeStats(List<Map<String, dynamic>> customers) {
+    final now = DateTime.now();
+    int thisMonth = 0;
+    int active = 0;
+
+    for (final c in customers) {
+      final isActive = (c['active'] ?? c['status'] ?? '1').toString();
+      if (isActive == '1' || isActive.toLowerCase() == 'active') active++;
+
+      final dateStr = (c['datecreated'] ?? c['created_at'] ?? '').toString();
+      final dt = DateTime.tryParse(dateStr);
+      if (dt != null && dt.year == now.year && dt.month == now.month) {
+        thisMonth++;
+      }
+    }
+
+    return {
+      'total': customers.length,
+      'active': active,
+      'this_month': thisMonth,
+    };
   }
 
   void _showFilterSheet() {
@@ -193,6 +216,9 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final adaptive = AppColors.adaptive(context);
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Customers'),
@@ -223,15 +249,69 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
             return CrmErrorWidget(message: provider.error!, onRetry: () => provider.fetchCustomers());
           }
           if (provider.customers.isEmpty) {
-            return const EmptyStateWidget(icon: Icons.people_rounded, title: 'No customers yet', subtitle: 'Tap + to add your first customer');
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 88,
+                      height: 88,
+                      decoration: BoxDecoration(
+                        color: AppColors.success.withValues(alpha: 0.08),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.people_rounded, size: 40, color: AppColors.success),
+                    ),
+                    const SizedBox(height: 20),
+                    Text('No customers yet', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18, color: colorScheme.onSurface)),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Add your first customer or convert\na lead to get started.',
+                      style: TextStyle(color: adaptive.textSecondary, fontSize: 14, height: 1.4),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      height: 46,
+                      child: ElevatedButton.icon(
+                        onPressed: () => _showAddDialog(context),
+                        icon: const Icon(Icons.add_rounded, size: 20),
+                        label: const Text('Add First Customer', style: TextStyle(fontWeight: FontWeight.w600)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
           }
 
           final filteredCustomers = _filterCustomers(provider.customers);
+          final stats = _computeStats(provider.customers);
 
           return RefreshIndicator(
             onRefresh: () => provider.fetchCustomers(),
             child: Column(
               children: [
+                // Stats summary row
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  child: Row(
+                    children: [
+                      _StatBadge(label: 'Total', count: stats['total'] ?? 0, color: colorScheme.onSurface),
+                      const SizedBox(width: 8),
+                      _StatBadge(label: 'Active', count: stats['active'] ?? 0, color: AppColors.success),
+                      const SizedBox(width: 8),
+                      _StatBadge(label: 'This Month', count: stats['this_month'] ?? 0, color: AppColors.info),
+                    ],
+                  ),
+                ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
                   child: TextField(
@@ -260,9 +340,9 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.search_off_rounded, size: 48, color: AppColors.textMuted),
+                              Icon(Icons.search_off_rounded, size: 48, color: adaptive.textMuted),
                               const SizedBox(height: 12),
-                              Text('No customers match "$_searchQuery"', style: const TextStyle(color: AppColors.textSecondary)),
+                              Text('No customers match "$_searchQuery"', style: TextStyle(color: adaptive.textSecondary)),
                             ],
                           ),
                         )
@@ -280,66 +360,9 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
                 if (index >= filteredCustomers.length) {
                   return const Padding(padding: EdgeInsets.all(16), child: Center(child: CircularProgressIndicator(strokeWidth: 2)));
                 }
-                final c = filteredCustomers[index];
-                final company = (c['company'] ?? '').toString().trim();
-                final contactName = (c['contact_name'] ?? c['contact_person'] ?? '').toString().trim();
-                final name = company.isNotEmpty ? company : (contactName.isNotEmpty ? contactName : 'Unknown');
-                final contact = company.isNotEmpty ? contactName : '';
-                final phone = c['phonenumber'] ?? c['contact_phone'] ?? c['phone'] ?? '';
-                final email = c['contact_email'] ?? c['email'] ?? '';
-
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 10),
-                  child: InkWell(
-                    onTap: () => _showDetailSheet(context, c),
-                    borderRadius: BorderRadius.circular(16),
-                    child: Padding(
-                      padding: const EdgeInsets.all(14),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 46, height: 46,
-                            decoration: BoxDecoration(
-                              color: AppColors.success.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Icon(Icons.business_rounded, color: AppColors.success, size: 22),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(name.toString(), style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: AppColors.textPrimary)),
-                                const SizedBox(height: 2),
-                                Text(
-                                  [if (contact.toString().isNotEmpty) contact, if (phone.toString().isNotEmpty) phone, if (email.toString().isNotEmpty) email].join(' · '),
-                                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                                  maxLines: 1, overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                            ),
-                          ),
-                          if (phone.toString().isNotEmpty)
-                            Container(
-                              margin: const EdgeInsets.only(right: 8),
-                              decoration: BoxDecoration(
-                                color: AppColors.success.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: IconButton(
-                                icon: const Icon(Icons.call_rounded, color: AppColors.success, size: 20),
-                                onPressed: () => launchUrl(Uri(scheme: 'tel', path: phone.toString())),
-                                splashRadius: 20,
-                                constraints: const BoxConstraints(minWidth: 38, minHeight: 38),
-                                padding: EdgeInsets.zero,
-                              ),
-                            ),
-                          const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textMuted),
-                        ],
-                      ),
-                    ),
-                  ),
+                return _CustomerCard(
+                  customer: filteredCustomers[index],
+                  onTap: () => _showDetailSheet(context, filteredCustomers[index]),
                 );
               },
             ),
@@ -357,6 +380,10 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
     final company = (customer['company'] ?? '').toString().trim();
     final contactName = (customer['contact_name'] ?? '').toString().trim();
     final name = company.isNotEmpty ? company : (contactName.isNotEmpty ? contactName : 'Unknown');
+    final adaptive = AppColors.adaptive(context);
+    final colorScheme = Theme.of(context).colorScheme;
+    final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
+
     showModalBottomSheet(
       context: context, isScrollControlled: true,
       builder: (ctx) {
@@ -365,21 +392,25 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
           builder: (_, controller) => ListView(
             controller: controller, padding: const EdgeInsets.all(20),
             children: [
-              Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: const Color(0xFFE2E8F0), borderRadius: BorderRadius.circular(2)))),
+              Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: adaptive.border, borderRadius: BorderRadius.circular(2)))),
               const SizedBox(height: 20),
               Center(child: Container(width: 72, height: 72,
-                  decoration: BoxDecoration(color: AppColors.success.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20)),
-                  child: const Icon(Icons.business_rounded, size: 32, color: AppColors.success))),
+                  decoration: BoxDecoration(
+                    color: AppColors.success.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(child: Text(initial,
+                      style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: AppColors.success))))),
               const SizedBox(height: 12),
-              Center(child: Text(name.toString(), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.textPrimary))),
+              Center(child: Text(name.toString(), style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: colorScheme.onSurface))),
               const SizedBox(height: 24),
               ...customer.entries
                   .where((e) => e.value != null && e.value.toString().isNotEmpty && e.key != 'id' && e.key != 'userid')
                   .map((e) => Padding(
                     padding: const EdgeInsets.only(bottom: 12),
                     child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      SizedBox(width: 120, child: Text(_formatKey(e.key), style: const TextStyle(color: AppColors.textMuted, fontSize: 13, fontWeight: FontWeight.w500))),
-                      Expanded(child: Text(e.value.toString(), style: const TextStyle(fontSize: 14, color: AppColors.textPrimary))),
+                      SizedBox(width: 120, child: Text(_formatKey(e.key), style: TextStyle(color: adaptive.textMuted, fontSize: 13, fontWeight: FontWeight.w500))),
+                      Expanded(child: Text(e.value.toString(), style: TextStyle(fontSize: 14, color: colorScheme.onSurface))),
                     ]),
                   )),
               const SizedBox(height: 20),
@@ -570,6 +601,237 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Customer Card Widget
+// ---------------------------------------------------------------------------
+class _CustomerCard extends StatelessWidget {
+  final Map<String, dynamic> customer;
+  final VoidCallback onTap;
+
+  const _CustomerCard({required this.customer, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final adaptive = AppColors.adaptive(context);
+
+    final company = (customer['company'] ?? '').toString().trim();
+    final contactName = (customer['contact_name'] ?? customer['contact_person'] ?? '').toString().trim();
+    final name = company.isNotEmpty ? company : (contactName.isNotEmpty ? contactName : 'Unknown');
+    final contact = company.isNotEmpty ? contactName : '';
+    final phone = customer['phonenumber'] ?? customer['contact_phone'] ?? customer['phone'] ?? '';
+    final email = customer['contact_email'] ?? customer['email'] ?? '';
+    final city = (customer['city'] ?? '').toString().trim();
+    final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
+
+    // Determine if active
+    final isActive = (customer['active'] ?? customer['status'] ?? '1').toString();
+    final active = isActive == '1' || isActive.toLowerCase() == 'active';
+    final accentColor = active ? AppColors.success : AppColors.textMuted;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Material(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(16),
+        elevation: 0,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: adaptive.border),
+            boxShadow: [
+              BoxShadow(
+                color: accentColor.withValues(alpha: 0.08),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(16),
+            child: IntrinsicHeight(
+              child: Row(
+                children: [
+                  // Colored left border accent
+                  Container(
+                    width: 4,
+                    decoration: BoxDecoration(
+                      color: accentColor,
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(16),
+                        bottomLeft: Radius.circular(16),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 14, 14, 14),
+                      child: Row(
+                        children: [
+                          // Avatar circle with initials
+                          Container(
+                            width: 46, height: 46,
+                            decoration: BoxDecoration(
+                              color: accentColor.withValues(alpha: 0.12),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Center(child: Text(
+                              initial,
+                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: accentColor),
+                            )),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                // Company name big
+                                Text(name,
+                                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: colorScheme.onSurface),
+                                    maxLines: 1, overflow: TextOverflow.ellipsis),
+                                if (contact.isNotEmpty) ...[
+                                  const SizedBox(height: 1),
+                                  Text(contact,
+                                      style: TextStyle(fontSize: 12.5, color: adaptive.textSecondary, fontWeight: FontWeight.w500),
+                                      maxLines: 1, overflow: TextOverflow.ellipsis),
+                                ],
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    // Active/Inactive badge
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: accentColor.withValues(alpha: 0.12),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Text(
+                                        active ? 'Active' : 'Inactive',
+                                        style: TextStyle(color: accentColor, fontSize: 10.5, fontWeight: FontWeight.w600),
+                                      ),
+                                    ),
+                                    if (city.isNotEmpty) ...[
+                                      const SizedBox(width: 6),
+                                      Icon(Icons.location_on_outlined, size: 12, color: adaptive.textMuted),
+                                      const SizedBox(width: 2),
+                                      Flexible(
+                                        child: Text(city,
+                                          style: TextStyle(fontSize: 11, color: adaptive.textMuted),
+                                          maxLines: 1, overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          // Action buttons
+                          Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              if (phone.toString().isNotEmpty) ...[
+                                _CardIconButton(
+                                  icon: Icons.call_rounded,
+                                  color: AppColors.success,
+                                  onTap: () => launchUrl(Uri(scheme: 'tel', path: phone.toString())),
+                                  tooltip: 'Call',
+                                ),
+                                const SizedBox(height: 4),
+                              ],
+                              if (email.toString().isNotEmpty)
+                                _CardIconButton(
+                                  icon: Icons.mail_outline_rounded,
+                                  color: AppColors.info,
+                                  onTap: () => launchUrl(Uri(scheme: 'mailto', path: email.toString())),
+                                  tooltip: 'Email',
+                                ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Stats Badge
+// ---------------------------------------------------------------------------
+class _StatBadge extends StatelessWidget {
+  final String label;
+  final int count;
+  final Color color;
+
+  const _StatBadge({required this.label, required this.count, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final adaptive = AppColors.adaptive(context);
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.15)),
+        ),
+        child: Column(
+          children: [
+            Text('$count', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: color)),
+            const SizedBox(height: 2),
+            Text(label, style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w500, color: adaptive.textSecondary)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Small icon button for card actions
+// ---------------------------------------------------------------------------
+class _CardIconButton extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+  final String tooltip;
+
+  const _CardIconButton({required this.icon, required this.color, required this.onTap, required this.tooltip});
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(10),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(10),
+          child: SizedBox(
+            width: 36, height: 36,
+            child: Icon(icon, color: color, size: 18),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Section Header (for add form)
+// ---------------------------------------------------------------------------
 class _SectionHeader extends StatelessWidget {
   final String title;
   const _SectionHeader({required this.title});
@@ -589,7 +851,7 @@ class _ActionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(right: 4),
-      decoration: BoxDecoration(color: AppColors.surfaceVariant, borderRadius: BorderRadius.circular(10)),
+      decoration: BoxDecoration(color: AppColors.adaptive(context).surfaceVariant, borderRadius: BorderRadius.circular(10)),
       child: IconButton(icon: Icon(icon, size: 20), onPressed: onTap, splashRadius: 20),
     );
   }

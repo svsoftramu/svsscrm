@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_in_app_messaging/firebase_in_app_messaging.dart';
@@ -18,9 +19,21 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await ApiService.instance.init();
-  await CacheService.instance.init();
-  await OfflineSyncService.instance.init();
+
+  // Set preferred orientations and system UI overlay style for native feel
+  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.dark,
+    systemNavigationBarColor: Colors.white,
+  ));
+
+  // Init core services in parallel for faster startup
+  await Future.wait([
+    ApiService.instance.init(),
+    CacheService.instance.init(),
+    OfflineSyncService.instance.init(),
+  ]);
 
   // Initialize Firebase — must complete before runApp for FCM to work
   bool firebaseReady = false;
@@ -32,7 +45,6 @@ void main() async {
   }
 
   // Launch the app first, then init push/reminders in the background
-  // This prevents white screen if FCM token fetch hangs (iOS simulator)
   runApp(
     MultiProvider(
       providers: [
@@ -62,6 +74,17 @@ void main() async {
   }
 }
 
+/// Custom page route with smooth native-feel slide transition
+class SmoothPageRoute<T> extends MaterialPageRoute<T> {
+  SmoothPageRoute({required super.builder, super.settings});
+
+  @override
+  Duration get transitionDuration => const Duration(milliseconds: 250);
+
+  @override
+  Duration get reverseTransitionDuration => const Duration(milliseconds: 200);
+}
+
 class MyCrmApp extends StatelessWidget {
   const MyCrmApp({super.key});
 
@@ -71,8 +94,22 @@ class MyCrmApp extends StatelessWidget {
     return MaterialApp(
       title: 'SV Soft Solutions',
       navigatorKey: navigatorKey,
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
+      theme: AppTheme.lightTheme.copyWith(
+        pageTransitionsTheme: const PageTransitionsTheme(
+          builders: {
+            TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+            TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          },
+        ),
+      ),
+      darkTheme: AppTheme.darkTheme.copyWith(
+        pageTransitionsTheme: const PageTransitionsTheme(
+          builders: {
+            TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+            TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          },
+        ),
+      ),
       themeMode: themeProvider.themeMode,
       home: const SplashScreen(),
       debugShowCheckedModeBanner: false,
